@@ -1,6 +1,6 @@
 (ns mongo-query.core
   (:use seesaw.core)
-  (:require [monger.core :as mg]))
+)
 
 (defn -main [& args]
   (invoke-later
@@ -22,13 +22,4 @@
            :on-close :exit)
      pack!
      show!))
-)
-
-(defn mongoAvailable? []
-	(try 
-		((mg/connect!)
-  		(mg/get-db-names)
-  		true)
-	(catch Exception e false)
-	)
 )
