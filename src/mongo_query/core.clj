@@ -2,6 +2,17 @@
   (:use seesaw.core)
 )
 
+(defn generateTable [results]
+    (table :id :table
+      :model [
+      :columns (vec (map #(hash-map :key % :text %) (set (mapcat keys results))))
+      :rows results
+      ]
+    )
+)
+
+(defn testGenerateTable [] (generateTable [{:name "name" :location "london"} {:test "test"} {:name "noone" :location "world" :test "test1"}]))
+
 (defn -main [& args]
   (invoke-later
     (-> (frame :title "Mongo Query Tool",
@@ -9,12 +20,16 @@
            (form-panel
       			:items [
       				[nil :fill :both :insets (java.awt.Insets. 5 5 5 5) :gridx 0 :gridy 0 :gridwidth 1]
-      				[(grid-panel :columns 1 
+      				[(grid-panel :columns 2 
 			            :items [			            	
-			            	(label :text "Result:" :halign :left)
-			            	(text :columns 20 :multi-line? true)
+			            	(label :text "Results:" :halign :left)
+                    :fill-h
+                    (testGenerateTable)
+                    :fill-h
 			            	(label :text "Query" :halign :left)
-			            	(text :columns 20)
+                    :fill-h
+			            	(text :columns 20 :multi-line? true)
+                    (button :text "Query!")
 			            ])
 			         	:grid :next]
 			        ]
