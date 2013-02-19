@@ -50,3 +50,38 @@
 		)
 	)
 )
+
+(use 'clojure.string)
+
+(defn type-coerce-filter-expression [filter-list]
+  (letfn [(convert [val]
+            (cond
+             (re-matches #"'.*'" val) ((re-find #"'(.*)'" val) 1)
+             (re-matches #"\d+" val) (Integer/parseInt val)
+             (re-matches #"\d*\.\d+" val) (Float/parseFloat val)
+             (re-matches #"\d+\.\d*" val) (Float/parseFloat val)
+             (re-matches #"(true|false)" val) (Boolean/parseBoolean val)
+             :else val))]
+    (map (fn [{field :field op :op val :val}] {:field field :op op :val (convert val)}) filter-list)))
+
+(defn parse-sql [sql-string]
+  (letfn [(parse-filters [filter-string]
+            (if (nil? filter-string)
+              nil
+              (map #(zipmap '(:field :op :val) %)(map #(split % #" +") (map trim (split filter-string #"(?i)and"))))))
+          (parse-fields [field-string]
+            (if (nil? field-string)
+              nil
+              (map trim (split field-string #","))))]
+    (let [sql-regex #"(?i)^\s*select(.+?) from(.+?)( where (.+?))?( order by (.+?))?(asc|desc)?\s*;?\s*$"
+          group-matches (re-seq sql-regex sql-string)]
+      (if (nil? group-matches)
+        nil
+        (let [groups (first group-matches)
+              [_ fields table & filters-and-sort] groups
+              [_ filters _ sort-fields direction] filters-and-sort]
+          {:fields (parse-fields fields)
+           :table (trim table)
+           :filters (type-coerce-filter-expression (parse-filters filters))
+           :sort-fields (parse-fields sort-fields)
+           :direction direction})))))

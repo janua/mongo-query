@@ -1,5 +1,6 @@
 (ns mongo-query.core
   (:use seesaw.core)
+  (:require mongo-query.mongo)
 )
 
 (defn generateTable [results]
@@ -12,6 +13,10 @@
 )
 
 (defn testGenerateTable [] (generateTable [{:name "name" :location "london"} {:test "test"} {:name "noone" :location "world" :test "test1"}]))
+
+(def queryText (text :columns 20 :multi-line? true))
+
+(defn parseString [s] (parse-sql s))
 
 (defn -main [& args]
   (invoke-later
@@ -28,8 +33,8 @@
                     :fill-h
 			            	(label :text "Query" :halign :left)
                     :fill-h
-			            	(text :columns 20 :multi-line? true)
-                    (button :text "Query!")
+			            	queryText
+                    (button :text "Query!" :listen [:action (fn [e] (alert (parseString (value queryText) )))])
 			            ])
 			         	:grid :next]
 			        ]
