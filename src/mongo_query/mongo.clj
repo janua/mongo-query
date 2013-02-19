@@ -31,3 +31,22 @@
 (defn getIds [query]
 	(map #(get % :_id) (mongoQuery query))
 )
+
+(defn convertFilterOperator [filterOperator]
+	(let [
+			op (get filterOperator :operator)
+			keyAsKeyword (keyword (get filterOperator :key))
+			value (get filterOperator :value)
+			keyValue (get filterOperator :key)
+		 ]
+		(cond
+			(= op "=")  {:key keyValue :value value}
+			(= op "!=") {keyAsKeyword (hash-map :$ne value)}
+			(= op ">")  {keyAsKeyword (hash-map :$gt value)}
+			(= op "<")  {keyAsKeyword (hash-map :$lt value)}
+			(= op ">=") {keyAsKeyword (hash-map :$gte value)}
+			(= op "<=") {keyAsKeyword (hash-map :$lte value)}
+			:else nil
+		)
+	)
+)
