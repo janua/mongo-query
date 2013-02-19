@@ -1,8 +1,8 @@
 (ns mongo-query.core
-	  (:require [monger.core :as mongo])
-	  (:require [monger.collection :as mc])
-	  (:use [clojure.string :only [trim split]])
-	  )
+          (:require [monger.core :as mongo])
+          (:require [monger.collection :as mc])
+          (:use [clojure.string :only [trim split]])
+          )
 
 (def tablename "mongo-query")
 (def host "127.0.0.1")
@@ -14,46 +14,57 @@
   )
 
 (defn insertTestData []
-	(mc/remove "documents")
-	(map #(mc/insert "documents" %) [
-		{:name "John" :age 18}
-		{:name "Mary" :age 49}
-		{:name "Bob" :age 30 :location "London"}
-		{:name "Noone" :age 31 :location "Oslo"}
-	])
+        (mc/remove "documents")
+        (map #(mc/insert "documents" %) [
+                {:name "John" :age 18}
+                {:name "Mary" :age 49}
+                {:name "Bob" :age 30 :location "London"}
+                {:name "Noone" :age 31 :location "Oslo"}
+        ])
 )
 
 (defn allDocuments [] (mc/find-maps "documents"))
 
-(defn mongoQuery [query] (
-	mc/find-maps 
-		(get query :table "documents")
-		(get query :filters) 
-		(vec (get query :fields))
-))
+
+
+;;(allDocuments)
+
+
+;;(mongoQuery {:fields '("name"), :table "documents", :filters {:name "John"} :sort-fields nil, :direction nil})
+;;(mongoQuery {:table "documents" :fields '("name")})
+
+
+;;(parse-sql "select name from documents where name = 'John'")
+
+(defn mongoQuery [query]
+  (mc/find-maps
+   (:table query)
+   (:filters query)
+   (:fields query)))
 
 (defn getIds [query]
-	(map #(get % :_id) (mongoQuery query))
+        (map #(get % :_id) (mongoQuery query))
 )
 
-(defn convertFilterOperator [filterOperator]
-	(let [
-			op (get filterOperator :operator)
-			keyAsKeyword (keyword (get filterOperator :key))
-			value (get filterOperator :value)
-			keyValue (get filterOperator :key)
-		 ]
-		(cond
-			(= op "=")  {:key keyValue :value value}
-			(= op "!=") {keyAsKeyword (hash-map :$ne value)}
-			(= op ">")  {keyAsKeyword (hash-map :$gt value)}
-			(= op "<")  {keyAsKeyword (hash-map :$lt value)}
-			(= op ">=") {keyAsKeyword (hash-map :$gte value)}
-			(= op "<=") {keyAsKeyword (hash-map :$lte value)}
-			:else nil
-		)
-	)
-)
+;;(convert-filter-operator {:key "name", :operator "=", :value "John"})
+
+
+(defn convert-filter-operator [filter-operator]
+        (let [op (get filter-operator :operator)
+              keyAsKeyword (keyword (get filter-operator :key))
+              value (get filter-operator :value)
+              keyValue (get filter-operator :key)]
+                (cond
+                        (= op "=")  {:key keyValue :value value}
+                        (= op "!=") {keyAsKeyword (hash-map :$ne value)}
+                        (= op ">")  {keyAsKeyword (hash-map :$gt value)}
+                        (= op "<")  {keyAsKeyword (hash-map :$lt value)}
+                        (= op ">=") {keyAsKeyword (hash-map :$gte value)}
+                        (= op "<=") {keyAsKeyword (hash-map :$lte value)}
+                        :else nil
+                )))
+
+
 
 (defn type-coerce-filter-expression [filter-list]
   (letfn [(convert [val]
