@@ -1,13 +1,17 @@
 (ns mongo-query.core
 	  (:require [monger.core :as mongo])
-	  (:require [monger.collection :as mc]))
+	  (:require [monger.collection :as mc])
+	  (:use [clojure.string :only [trim split]])
+	  )
 
 (def tablename "mongo-query")
 (def host "127.0.0.1")
 (def port 27017)
 
 (let [^ServerAddress serverAddress (mongo/server-address host port)]
-  (mongo/connect! serverAddress))
+  (mongo/connect! serverAddress)
+  (mongo/set-db! (mongo/get-db "documents"))
+  )
 
 (defn insertTestData []
 	(mc/remove "documents")
@@ -24,8 +28,8 @@
 (defn mongoQuery [query] (
 	mc/find-maps 
 		(get query :table "documents")
-		(get query :filter) 
-		(get query :select)
+		(get query :filters) 
+		(vec (get query :fields))
 ))
 
 (defn getIds [query]
@@ -50,8 +54,6 @@
 		)
 	)
 )
-
-(use 'clojure.string)
 
 (defn type-coerce-filter-expression [filter-list]
   (letfn [(convert [val]
